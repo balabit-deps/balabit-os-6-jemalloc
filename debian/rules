@@ -1,0 +1,51 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+export DH_VERBOSE=1
+
+DEB_HOST_ARCH := $(shell dpkg-architecture -qDEB_HOST_ARCH)
+DEB_HOST_ARCH_OS := $(shell dpkg-architecture -qDEB_HOST_ARCH_OS)
+
+ifneq (,$(findstring $(DEB_HOST_ARCH),sparc sparc64))
+  DEB_CPPFLAGS_MAINT_APPEND += -DLG_QUANTUM=4
+endif
+
+ifneq (,$(findstring $(DEB_HOST_ARCH),m68k or1k))
+  DEB_CPPFLAGS_MAINT_APPEND += -DLG_QUANTUM=3
+endif
+
+ifneq (,$(findstring $(DEB_HOST_ARCH),powerpc))
+  DEB_CPPFLAGS_MAINT_APPEND += -maltivec
+endif
+
+ifeq ($(DEB_HOST_ARCH_OS),kfreebsd)
+  DEB_CPPFLAGS_MAINT_APPEND += -DJEMALLOC_PURGE_MADVISE_FREE
+endif
+
+ifeq ($(DEB_HOST_ARCH_OS),hurd)
+  # Fake a PATH_MAX when building on Hurd to keep jemalloc happy
+  DEB_CPPFLAGS_MAINT_APPEND += -DPATH_MAX=8192
+endif
+
+DEB_CFLAGS_MAINT_APPEND += -std=gnu99
+
+export DEB_CFLAGS_MAINT_APPEND DEB_CPPFLAGS_MAINT_APPEND
+
+%:
+	dh $@ --parallel
+
+override_dh_auto_build:
+	make all doc
+
+ifeq ($(filter nocheck,$(DEB_BUILD_OPTIONS)),)
+export ASAN_OPTIONS = suppressions=$(CURDIR)/debian/asan-suppressions.txt
+override_dh_auto_test:
+	make check
+endif
+
+override_dh_auto_install:
+	make install_include install_lib DESTDIR=$(CURDIR)/debian/tmp
+
+override_dh_strip:
+	dh_strip -p libjemalloc1 --dbg-package=libjemalloc1-dbg
+	dh_strip -a --remaining-packages

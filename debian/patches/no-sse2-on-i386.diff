@@ -1,0 +1,32 @@
+Index: b/configure
+===================================================================
+--- a/configure
++++ b/configure
+@@ -4622,9 +4622,9 @@ case $host_os in *\ *) host_os=`echo "$h
+ 
+ CPU_SPINWAIT=""
+ case "${host_cpu}" in
+-  i[345]86)
++  i[3456]86)
+ 	;;
+-  i686|x86_64)
++  x86_64)
+ 
+ { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether pause instruction is compilable" >&5
+ $as_echo_n "checking whether pause instruction is compilable... " >&6; }
+Index: b/configure.ac
+===================================================================
+--- a/configure.ac
++++ b/configure.ac
+@@ -201,9 +201,9 @@ AC_CANONICAL_HOST
+ dnl CPU-specific settings.
+ CPU_SPINWAIT=""
+ case "${host_cpu}" in
+-  i[[345]]86)
++  i[[3456]]86)
+ 	;;
+-  i686|x86_64)
++  x86_64)
+ 	JE_COMPILABLE([pause instruction], [],
+ 	              [[__asm__ volatile("pause"); return 0;]],
+ 	              [je_cv_pause])
